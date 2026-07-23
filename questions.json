@@ -1,0 +1,38 @@
+[
+    {
+        "question": "¿Qué significa PO en farmacia?",
+        "options": [
+            "Por la boca",
+            "Una vez al día",
+            "Dos veces al día"
+        ],
+        "answer": "Por la boca"
+    },
+    {
+        "question": "¿Qué significa BID?",
+        "options": [
+            "Una vez al día",
+            "Dos veces al día",
+            "Tres veces al día"
+        ],
+        "answer": "Dos veces al día"
+    },
+    {
+        "question": "¿Para qué se usa Metformin principalmente?",
+        "options": [
+            "Presión alta",
+            "Diabetes tipo 2",
+            "Colesterol alto"
+        ],
+        "answer": "Diabetes tipo 2"
+    },
+    {
+        "question": "¿Quién hace la revisión final del medicamento?",
+        "options": [
+            "Paciente",
+            "Pharmacy Technician",
+            "Pharmacist"
+        ],
+        "answer": "Pharmacist"
+    }
+]
