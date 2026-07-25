@@ -1,0 +1,26 @@
+{
+    "nombre": "Melvin",
+    "xp": 280,
+    "correctas": 13,
+    "incorrectas": 7,
+    "racha": 0,
+    "modulos_completados": [
+        "Module 1 - Data Entry",
+        "Module 2 - Insurance Billing"
+    ],
+    "ptcb_attempts": 4,
+    "ptcb_best_score": 80,
+    "ptcb_passed": true,
+    "achievements": [
+        "🎓 PTCB Ready",
+        "📝 PTCB Student"
+    ],
+    "examenes_ptcb": 6,
+    "mejor_score_ptcb": 70,
+    "preguntas_ptcb_correctas": 26,
+    "preguntas_ptcb_totales": 55,
+    "nivel": "🥈 Intermediate Pharmacy Technician",
+    "logros": [
+        "🥇 First Prescription"
+    ]
+}

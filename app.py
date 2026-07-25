@@ -1,8 +1,11 @@
 import streamlit as st
-import json
-import os
 import random
+import os
+import json
+
 from modules.module5_medications import modulo_medicamentos
+from utils.progress import ProgressManager
+from modules.ptcb_exam import modulo_ptcb
 
 # ============================================================
 # PAGE CONFIG & BACKGROUND
@@ -12,32 +15,93 @@ st.set_page_config(page_title="BostonPharmacy-OS", page_icon="💊", layout="cen
 # LOAD STUDENT PROGRESS
 # ============================================================
 
-archivo_progreso = "progress.json"
-if os.path.exists(archivo_progreso):
-    with open(archivo_progreso, "r") as file:
-        progreso = json.load(file)
 
-    # Crear datos nuevos si no existen
-    if "xp" not in progreso:
-        progreso["xp"] = 0
 
-    if "correctas" not in progreso:
-        progreso["correctas"] = 0
 
-    if "incorrectas" not in progreso:
-        progreso["incorrectas"] = 0
+class Progreso:
+    archivo_progreso = "progress.json"
+    def __init__(self, filepath="progress.json"):
+        self.filepath = filepath
+        self.nombre = "Melvin"
+        self.xp = 0
+        self.correctas = 0
+        self.incorrectas = 0
+        self.racha = 0
+        self.load()
 
-    if "racha" not in progreso:
-        progreso["racha"] = 0
+    def load(self):
+        if not os.path.exists(self.filepath):
+            self.save()
+            return
 
-else:
-    progreso = {
-        "nombre": "Melvin",
-        "xp": 0,
-        "correctas": 0,
-        "incorrectas": 0,
-        "racha": 0
-    }
+        try:
+            with open(self.filepath, "r", encoding="utf-8") as file:
+                data = json.load(file)
+        except (OSError, ValueError, json.JSONDecodeError):
+            self.save()
+            return
+
+        self.nombre = data.get("nombre", self.nombre)
+        self.xp = int(data.get("xp", self.xp))
+        self.correctas = int(data.get("correctas", self.correctas))
+        self.incorrectas = int(data.get("incorrectas", self.incorrectas))
+        self.racha = int(data.get("racha", self.racha))
+
+    def save(self):
+        try:
+            with open(self.filepath, "w", encoding="utf-8") as file:
+                json.dump(self.to_dict(), file, indent=4)
+        except OSError:
+            pass
+
+    def update_stats(self, correct: bool, xp_gain: int = 0):
+        if correct:
+            self.correctas += 1
+            self.racha += 1
+            self.xp += xp_gain
+        else:
+            self.incorrectas += 1
+            self.racha = 0
+        self.save()
+
+    def get_level(self):
+        if self.xp >= 250:
+            return "Advanced Pharmacy Technician"
+        elif self.xp >= 100:
+            return "Intermediate Pharmacy Technician"
+        else:
+            return "Beginner Pharmacy Technician"
+
+    def to_dict(self):
+        return {
+            "nombre": self.nombre,
+            "xp": self.xp,
+            "correctas": self.correctas,
+            "incorrectas": self.incorrectas,
+            "racha": self.racha
+        }
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+
+
+
+progreso = ProgressManager()
+# ============================================================
+# MODULE COMPLETION SYSTEM
+# ============================================================
+
+def completar_modulo(nombre_modulo):
+
+    progreso.complete_module(nombre_modulo)
+
+    st.success(
+        f"🎉 Module Completed: {nombre_modulo}"
+    )
+
 
 st.markdown("""
 <style>
@@ -51,6 +115,26 @@ st.markdown("""
 }
 [data-testid="stSidebar"] {
     background-color: rgba(13, 59, 107, 0.92);
+    /* Barra de desplazamiento del menú izquierdo */
+[data-testid="stSidebar"] > div:first-child {
+    height: 100vh;
+    overflow-y: auto;
+}
+
+
+/* Diseño de la barra */
+[data-testid="stSidebar"] > div:first-child::-webkit-scrollbar {
+    width: 10px;
+}
+
+[data-testid="stSidebar"] > div:first-child::-webkit-scrollbar-thumb {
+    background-color: #2f8fd1;
+    border-radius: 10px;
+}
+
+[data-testid="stSidebar"] > div:first-child::-webkit-scrollbar-track {
+    background-color: #0d3b6b;
+}
 }
 [data-testid="stSidebar"] * {
     color: #ffffff !important;
@@ -62,40 +146,167 @@ st.title("💊 BostonPharmacy-OS v2026")
 st.subheader("Pharmacy Technician Training Simulator - Boston, MA")
 st.write("---")
 # ============================================================
-# STUDENT PROGRESS
+# STUDENT PROFILE DASHBOARD
 # ============================================================
 
-st.sidebar.header("👨‍🎓 Mi Progreso")
+st.sidebar.header("👨‍🎓 Student Profile")
 
-if "xp" not in st.session_state:
-    st.session_state.xp = 0
+# Datos del progreso
+xp = progreso.data["xp"]
+correctas = progreso.data["correctas"]
+incorrectas = progreso.data["incorrectas"]
+racha = progreso.data["racha"]
 
-if "correctas" not in st.session_state:
-    st.session_state.correctas = 0
+nivel = progreso.get_level()
 
-if "incorrectas" not in st.session_state:
-    st.session_state.incorrectas = 0
+# Tarjeta del estudiante
+st.sidebar.markdown(
+    f"""
+    <div style="
+        background: linear-gradient(135deg,#0d3b6b,#1a5f9e);
+        padding:20px;
+        border-radius:20px;
+        text-align:center;
+        color:white;
+        margin-bottom:15px;
+        box-shadow:0px 5px 15px rgba(0,0,0,0.25);
+    ">
+
+    <div style="
+        font-size:45px;
+    ">
+    👨‍🎓
+    </div>
+
+    <h2 style="
+        color:white;
+        margin:5px;
+    ">
+    Melvin
+    </h2>
 
 
-nivel = "Beginner Pharmacy Technician"
+    <p style="
+        color:#d9f1ff;
+        font-size:18px;
+        font-weight:bold;
+    ">
+    {nivel}
+    </p>
 
-if st.session_state.xp >= 100:
-    nivel = "Intermediate Pharmacy Technician"
 
-if st.session_state.xp >= 250:
-    nivel = "Advanced Pharmacy Technician"
+    <p style="
+        color:white;
+        font-size:14px;
+    ">
+    💊 BostonPharmacy-OS Student
+    </p>
 
-st.sidebar.write(f"🏆 XP: {st.session_state.xp}")
-st.sidebar.write(f"✅ Correctas: {st.session_state.correctas}")
-st.sidebar.write(f"❌ Incorrectas: {st.session_state.incorrectas}")
-st.sidebar.write(f"🔥 Racha: {progreso['racha']}")
-st.sidebar.write(f"🎓 Nivel: {nivel}")
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Barra de progreso XP
+
+porcentaje = progreso.get_progress_percent()
+
+st.sidebar.write("🎯 Training Progress")
+
+st.sidebar.progress(porcentaje / 100)
+
+st.sidebar.write(
+    f"🏆 XP: {xp} / 500"
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.markdown("### 📝 PTCB Progress")
+
+
+st.sidebar.write(
+    f"📚 Attempts: {progreso.data['ptcb_attempts']}"
+)
+
+
+st.sidebar.write(
+    f"🏆 Best Score: {progreso.data['ptcb_best_score']}%"
+)
+
+
+if progreso.data["ptcb_passed"]:
+
+    st.sidebar.success(
+        "🎓 PTCB Passed ✅"
+    )
+
+else:
+
+    st.sidebar.warning(
+        "📚 PTCB Not Passed"
+    )
+
+# Estadísticas
+
+st.sidebar.markdown("### 📊 Performance")
+
+col1, col2 = st.sidebar.columns(2)
+
+with col1:
+    st.metric(
+        "✅ Correct",
+        correctas
+    )
+
+with col2:
+    st.metric(
+        "❌ Errors",
+        incorrectas
+    )
+
+
+st.sidebar.write(
+    f"🔥 Current Streak: {racha}"
+)
+st.sidebar.markdown("---")
+
+st.sidebar.write("📚 Modules Completed")
+
+if progreso.data["modulos_completados"]:
+
+    for modulo in progreso.data["modulos_completados"]:
+        st.sidebar.write(f"✅ {modulo}")
+
+else:
+
+    st.sidebar.write("⬜ No modules completed yet")
+
+# Logros
+
+st.sidebar.markdown("### 🏅 Achievements")
+
+
+if xp >= 10:
+    st.sidebar.success("💊 First Prescription Completed")
+
+
+if correctas >= 5:
+    st.sidebar.success("📚 Pharmacy Student")
+
+
+if xp >= 100:
+    st.sidebar.success("🥈 Intermediate Level")
+
+
+if xp >= 250:
+    st.sidebar.success("🥇 Advanced Technician")
 # ============================================================
 # CASE DATABASE
 # ============================================================
 
 # ---------- MODULE 1: DATA ENTRY & E-PRESCRIBING ----------
-# Mix of tablets, capsules, and oral liquids (suspensions)
+# Mix of tablets, capsules, and oral liquids (suspensions) 
 casos_m1 = [
     {"patient": "Sarah Johnson", "dob": "03/22/1990", "doctor": "Dr. Alan Reyes", "npi": "1122334455",
      "med": "Metformin 500mg tablets", "sig": "1 tab PO bid x 30 days", "qty": "60",
@@ -301,129 +512,419 @@ casos_m4 = [
 # ============================================================
 # SIDEBAR MENU
 # ============================================================
+st.sidebar.markdown("""
+<style>
+
+.sidebar-menu {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+st.sidebar.markdown(
+    '<div class="sidebar-menu">',
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# TRAINING MODULE MENU
+# ============================================================
+
+st.sidebar.markdown("---")
+
+st.sidebar.markdown(
+    "### 🖥️ Training Modules"
+)
+
+
 opcion = st.sidebar.selectbox(
-    "Select a system function:",
+    "Select Module:",
     [
         "1. Data Entry & E-Prescribing",
         "2. Insurance Billing (MassHealth)",
         "3. Controlled Substances (MassPAT)",
         "4. Patient POS & Copay",
-        "5. Medication Knowledge"
+         "5. Medication Knowledge",
+         "6. PTCB Practice Exam"
     ]
+)
+
+
+st.sidebar.markdown(
+    "</div>",
+    unsafe_allow_html=True
 )
 
 # ============================================================
 # MODULE 1
 # ============================================================
+
 if opcion == "1. Data Entry & E-Prescribing":
+
     st.header("📝 Prescription Data Entry Module")
 
-    num_caso = st.sidebar.selectbox("Practice case:", list(range(1, 11)), key="caso_m1")
+    st.sidebar.markdown("### 📋 Module 1 Cases")
+
+    num_caso = st.sidebar.selectbox(
+        "Select Case:",
+        list(range(1, 11)),
+        key="caso_m1"
+    )
+
     caso = casos_m1[num_caso - 1]
 
-    st.info(f"Case {num_caso} of 10: Electronic prescription received from Massachusetts General Hospital.")
+
+    st.info(
+        f"Case {num_caso} of 10: Electronic prescription received from Massachusetts General Hospital."
+    )
+
 
     receta_texto = (
-        f"PATIENT: {caso['patient']}\nDOB: {caso['dob']}\nDR: {caso['doctor']} (NPI: {caso['npi']})\n"
-        f"MED: {caso['med']}\nSIG: {caso['sig']}\nQTY: {caso['qty']}"
+        f"PATIENT: {caso['patient']}\n"
+        f"DOB: {caso['dob']}\n"
+        f"DR: {caso['doctor']} (NPI: {caso['npi']})\n"
+        f"MED: {caso['med']}\n"
+        f"SIG: {caso['sig']}\n"
+        f"QTY: {caso['qty']}"
     )
-    st.text_area("Digital Prescription Received:", value=receta_texto, height=120, key=f"ta_{num_caso}")
 
-    sig_input = st.text_input("Translate the SIG code into patient instructions (in English or Spanish):", key=f"sig_{num_caso}")
-    days_supply = st.number_input("How many days supply is this prescription for?", min_value=0, value=0, key=f"days_{num_caso}")
 
-    if st.button("Verify Prescription", key=f"btn_{num_caso}"):
-        sig_ok = any(k in sig_input.lower() for k in caso["keywords"])
+    st.text_area(
+        "Digital Prescription Received:",
+        value=receta_texto,
+        height=120,
+        key=f"ta_{num_caso}"
+    )
+
+
+    sig_input = st.text_input(
+        "Translate the SIG code into patient instructions (English or Spanish):",
+        key=f"sig_{num_caso}"
+    )
+
+
+    days_supply = st.number_input(
+        "How many days supply is this prescription for?",
+        min_value=0,
+        value=0,
+        key=f"days_{num_caso}"
+    )
+
+
+    if st.button(
+        "Verify Prescription",
+        key=f"btn_m1_{num_caso}"
+    ):
+
+
+        sig_ok = any(
+            k in sig_input.lower()
+            for k in caso["keywords"]
+        )
+
+
         dias_ok = days_supply == caso["dias"]
+
+
+
         if sig_ok and dias_ok:
-            progreso.get("xp", 0)
-            progreso["correctas"] += 1
 
-            with open("progress.json", "w") as file:
-                json.dump(progreso, file, indent=4)
 
-            st.success("✅ Correcto")
-            st.info("🏆 +10 XP")
-        elif not sig_ok and not dias_ok:
-            st.session_state.incorrectas += 1
-            st.error(f"❌ Review both the SIG translation and the days supply calculation. Correct days supply: {caso['dias']}.")
-        elif not sig_ok:
-            st.session_state.incorrectas += 1
-            st.warning(f"⚠️ Review the translation of the SIG code: '{caso['sig']}'.")
+            progreso.correct_answer(10)
+
+
+            progreso.complete_module(
+                "Module 1 - Data Entry"
+            )
+
+
+            st.success(
+                "✅ Correct! Prescription verified."
+            )
+
+            st.info(
+                "🏆 +10 XP"
+            )
+
+
+
         else:
-            st.session_state.incorrectas += 1
-            st.error(f"❌ Days supply error. The correct calculation for this prescription is {caso['dias']} days.")
 
+
+            progreso.wrong_answer()
+
+
+            st.error(
+                f"❌ Incorrect. Correct days supply: {caso['dias']} days."
+            )
 # ============================================================
 # MODULE 2
 # ============================================================
+
 elif opcion == "2. Insurance Billing (MassHealth)":
+
     st.header("💳 Insurance Claim Adjudication")
 
-    num_caso = st.sidebar.selectbox("Practice case:", list(range(1, 11)), key="caso_m2")
+    st.sidebar.markdown("### 📋 Module 2 Cases")
+
+    num_caso = st.sidebar.selectbox(
+        "Select Case:",
+        list(range(1, 11)),
+        key="caso_m2"
+    )
+
     caso = casos_m2[num_caso - 1]
 
-    st.warning(f"SYSTEM ALERT — Case {num_caso} of 10: Claim Rejected by MassHealth. Patient: {caso['patient']}.")
-    st.error(f"REJECTION: {caso['rechazo']}")
 
-    st.write("As the Pharmacy Technician, what is your correct next step?")
-    accion = st.radio("Select the correct action:", caso["opciones"], key=f"radio_m2_{num_caso}")
+    st.warning(
+        f"SYSTEM ALERT — Case {num_caso} of 10: "
+        f"Claim Rejected by MassHealth. "
+        f"Patient: {caso['patient']}."
+    )
 
-    if st.button("Process Action", key=f"btn_m2_{num_caso}"):
-        if caso["opciones"].index(accion) == caso["correcta"]:
-            st.success(f"✅ Correct! {caso['explicacion']}")
+
+    st.error(
+        f"REJECTION: {caso['rechazo']}"
+    )
+
+
+    st.write(
+        "As the Pharmacy Technician, what is your correct next step?"
+    )
+
+
+    accion = st.radio(
+        "Select the correct action:",
+        caso["opciones"],
+        key=f"radio_m2_{num_caso}"
+    )
+
+
+    if st.button(
+        "Process Claim",
+        key=f"btn_m2_{num_caso}"
+    ):
+
+        respuesta = caso["opciones"].index(accion)
+
+
+        if respuesta == caso["correcta"]:
+
+            progreso.correct_answer(10)
+
+            progreso.complete_module(
+                "Module 2 - Insurance Billing"
+            )
+
+            st.success(
+                f"✅ Correct! {caso['explicacion']}"
+            )
+
+            st.info("🏆 +10 XP")
+
+
         else:
-            st.error(f"❌ Incorrect. {caso['explicacion']}")
+
+            progreso.wrong_answer()
+
+            st.error(
+                f"❌ Incorrect. {caso['explicacion']}"
+            )
 
 # ============================================================
 # MODULE 3
 # ============================================================
+
 elif opcion == "3. Controlled Substances (MassPAT)":
+
     st.header("🔒 Controlled Substance Verification")
 
-    num_caso = st.sidebar.selectbox("Practice case:", list(range(1, 11)), key="caso_m3")
+
+    st.sidebar.markdown("### 🔒 Module 3 Cases")
+
+
+    num_caso = st.sidebar.selectbox(
+        "Select Case:",
+        list(range(1, 11)),
+        key="caso_m3"
+    )
+
+
     caso = casos_m3[num_caso - 1]
 
-    st.info(f"Case {num_caso} of 10 — Patient: {caso['patient']}. {caso['caso']}")
-    st.write("What is the correct action according to Massachusetts regulations (MassPAT / DEA)?")
 
-    accion = st.radio("Select the correct action:", caso["opciones"], key=f"radio_m3_{num_caso}")
 
-    if st.button("Process Verification", key=f"btn_m3_{num_caso}"):
-        if caso["opciones"].index(accion) == caso["correcta"]:
-            st.success(f"✅ Correct! {caso['explicacion']}")
+    st.info(
+        f"Case {num_caso} of 10 — "
+        f"Patient: {caso['patient']}.\n\n"
+        f"{caso['caso']}"
+    )
+
+
+    st.write(
+        "What is the correct action according to Massachusetts regulations (MassPAT / DEA)?"
+    )
+
+
+
+    accion = st.radio(
+        "Select the correct action:",
+        caso["opciones"],
+        key=f"radio_m3_{num_caso}"
+    )
+
+
+
+    if st.button(
+        "Process Verification",
+        key=f"btn_m3_{num_caso}"
+    ):
+
+
+        respuesta = caso["opciones"].index(accion)
+
+
+
+        if respuesta == caso["correcta"]:
+
+
+            progreso.correct_answer(10)
+
+
+            progreso.complete_module(
+                "Module 3 - Controlled Substances"
+            )
+
+
+            st.success(
+                f"✅ Correct! {caso['explicacion']}"
+            )
+
+
+            st.info(
+                "🏆 +10 XP"
+            )
+
+
+
         else:
-            st.error(f"❌ Incorrect. {caso['explicacion']}")
+
+
+            progreso.wrong_answer()
+
+
+            st.error(
+                f"❌ Incorrect. {caso['explicacion']}"
+            )
+
 
 # ============================================================
 # MODULE 4
 # ============================================================
+
 elif opcion == "4. Patient POS & Copay":
+
     st.header("💵 Point of Sale & Copay Calculation")
 
-    num_caso = st.sidebar.selectbox("Practice case:", list(range(1, 11)), key="caso_m4")
+
+    st.sidebar.markdown("### 💵 Module 4 Cases")
+
+
+    num_caso = st.sidebar.selectbox(
+        "Select Case:",
+        list(range(1, 11)),
+        key="caso_m4"
+    )
+
+
     caso = casos_m4[num_caso - 1]
 
-    st.info(f"Case {num_caso} of 10 — Patient {caso['patient']} at the pickup counter.")
+
+
+    st.info(
+        f"Case {num_caso} of 10 — "
+        f"Patient {caso['patient']} at the pickup counter."
+    )
+
+
     st.write("**Insurance information:**")
-    st.write(f"- Total cost of medication: **${caso['costo']:.2f}**")
-    st.write(f"- {caso['descripcion']}")
+
+    st.write(
+        f"- Total cost of medication: **${caso['costo']:.2f}**"
+    )
+
+    st.write(
+        f"- {caso['descripcion']}"
+    )
+
+
 
     copay_input = st.number_input(
         "Calculate the copay the patient must pay ($):",
-        min_value=0.0, value=0.0, step=0.01, format="%.2f", key=f"copay_{num_caso}"
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
+        format="%.2f",
+        key=f"copay_{num_caso}"
     )
 
-    if st.button("Verify Copay", key=f"btn_m4_{num_caso}"):
+
+
+    if st.button(
+        "Verify Copay",
+        key=f"btn_m4_{num_caso}"
+    ):
+
+
         if caso["tipo"] == "percent":
-            copago_correcto = round(caso["costo"] * (1 - caso["cobertura"]), 2)
+
+            copago_correcto = round(
+                caso["costo"] * (1 - caso["cobertura"]),
+                2
+            )
+
         else:
+
             copago_correcto = caso["copago_fijo"]
 
+
+
         if abs(copay_input - copago_correcto) < 0.01:
-            st.success(f"✅ Correct! The copay is ${copago_correcto:.2f}.")
+
+
+            progreso.correct_answer(10)
+
+
+            progreso.complete_module(
+                "Module 4 - Patient POS & Copay"
+            )
+
+
+            st.success(
+                f"✅ Correct! The copay is ${copago_correcto:.2f}."
+            )
+
+
+            st.info(
+                "🏆 +10 XP"
+            )
+
+
+
         else:
-            st.error(f"❌ Incorrect. The correct copay is ${copago_correcto:.2f}.")
+
+
+            progreso.wrong_answer()
+
+
+            st.error(
+                f"❌ Incorrect. The correct copay is ${copago_correcto:.2f}."
+            )
             
 # ============================================================
 # MODULE 5: MEDICATION KNOWLEDGE
@@ -432,6 +933,15 @@ elif opcion == "5. Medication Knowledge":
 
     modulo_medicamentos(progreso)
    
+   # ============================================================
+# MODULE 6: PTCB EXAM
+# ============================================================
+
+elif opcion == "6. PTCB Practice Exam":
+
+    modulo_ptcb(progreso)
+    
+
 # ============================================================
 # FOOTER
 # ============================================================

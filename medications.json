@@ -1,0 +1,20 @@
+[
+    {
+        "name": "Lisinopril",
+        "use": "High Blood Pressure",
+        "spanish": "Presión alta",
+        "strength": "10 mg"
+    },
+    {
+        "name": "Metformin",
+        "use": "Type 2 Diabetes",
+        "spanish": "Diabetes tipo 2",
+        "strength": "500 mg"
+    },
+    {
+        "name": "Atorvastatin",
+        "use": "High Cholesterol",
+        "spanish": "Colesterol alto",
+        "strength": "20 mg"
+    }
+]

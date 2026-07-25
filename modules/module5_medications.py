@@ -8,6 +8,7 @@ def modulo_medicamentos(progreso):
 
     st.header("💊 Medication Knowledge")
 
+
     caso = random.choice(medicamentos)
 
 
@@ -25,29 +26,50 @@ def modulo_medicamentos(progreso):
     st.subheader(caso["pregunta"])
 
 
+
     respuesta = st.radio(
         "Choose the correct answer:",
-        caso["opciones"]
+        caso["opciones"],
+        key="med_answer"
     )
 
 
-    if st.button("Check Answer"):
+
+    if st.button(
+        "Check Answer",
+        key="btn_medication"
+    ):
+
+
 
         if caso["opciones"].index(respuesta) == caso["correcta"]:
 
-            st.success("✅ Correct! +10 XP")
 
-            progreso["xp"] += 10
-            progreso["correctas"] += 1
-            progreso["racha"] += 1
+
+            progreso.correct_answer(10)
+
+
+            progreso.complete_module(
+                "Module 5 - Medication Knowledge"
+            )
+
+
+            st.success(
+                "✅ Correct! +10 XP"
+            )
+
+
+            st.balloons()
+
 
 
         else:
 
-            st.error("❌ Incorrect")
-
-            progreso["incorrectas"] += 1
-            progreso["racha"] = 0
 
 
-        st.session_state.progreso = progreso
+            progreso.wrong_answer()
+
+
+            st.error(
+                "❌ Incorrect"
+            )
