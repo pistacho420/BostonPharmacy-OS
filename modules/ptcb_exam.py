@@ -6,7 +6,7 @@
 import streamlit as st
 import random
 
-
+from utils.certificate import create_certificate
 from data.ptcb_questions import preguntas_ptcb
 from database.database import (
     save_module_progress,
@@ -90,6 +90,28 @@ def modulo_ptcb(progreso):
         if porcentaje >= 80:
             st.success("🏆 STATUS: PASS")
             st.info("🎓 Congratulations! You are PTCB Ready!")
+            
+            st.divider()
+
+            st.subheader("📄 Certificate")
+
+            if "user" in st.session_state:
+
+                student_name = st.session_state.user["name"]
+
+                certificate = create_certificate(
+                    student_name,
+                    porcentaje
+                )
+
+                with open(certificate, "rb") as file:
+
+                    st.download_button(
+                        "📄 Download PTCB Certificate",
+                        file,
+                        file_name="PTCB_Certificate.pdf",
+                        mime="application/pdf"
+                    )
         else:
             st.error("❌ STATUS: FAIL")
             st.warning("📚 Review your weak areas and try again.")
