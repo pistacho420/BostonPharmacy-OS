@@ -1,6 +1,6 @@
 {
     "nombre": "Melvin",
-    "xp": 1120,
+    "xp": 1570,
     "correctas": 37,
     "incorrectas": 21,
     "racha": 1,
@@ -9,13 +9,14 @@
         "Module 2 - Insurance Billing",
         "Module 5 - Medication Knowledge"
     ],
-    "ptcb_attempts": 20,
-    "ptcb_best_score": 80,
+    "ptcb_attempts": 23,
+    "ptcb_best_score": 100,
     "ptcb_passed": true,
     "achievements": [
         "🎓 PTCB Ready",
         "📝 PTCB Student",
-        "💊 Medication Expert"
+        "💊 Medication Expert",
+        "🏆 Pharmacy Master"
     ],
     "examenes_ptcb": 6,
     "mejor_score_ptcb": 70,

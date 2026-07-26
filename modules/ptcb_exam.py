@@ -96,8 +96,14 @@ def modulo_ptcb(progreso):
             st.subheader("📄 Certificate")
 
             if "user" in st.session_state:
+                user = st.session_state.user
 
-                student_name = st.session_state.user["name"]
+                student_name = (
+                    user.get("name")
+                    or user.get("username")
+                    or user.get("full_name")
+                    or "Student"
+                )
 
                 certificate = create_certificate(
                     student_name,
@@ -105,7 +111,6 @@ def modulo_ptcb(progreso):
                 )
 
                 with open(certificate, "rb") as file:
-
                     st.download_button(
                         "📄 Download PTCB Certificate",
                         file,
