@@ -27,8 +27,6 @@ class ProgressManager:
 
     def unlock_achievement(self, logro):
         # ensure achievements list exists
-        if "achievements" not in self.data:
-            self.data["achievements"] = []
         if logro not in self.data["achievements"]:
             self.data["achievements"].append(logro)
             self.save()

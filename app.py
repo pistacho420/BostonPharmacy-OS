@@ -2,15 +2,29 @@ import streamlit as st
 import random
 import os
 import json
-
+from database.database import create_tables, update_database
+from modules.auth import login_screen
 from modules.module5_medications import modulo_medicamentos
 from utils.progress import ProgressManager
 from modules.ptcb_exam import modulo_ptcb
+from modules.profile import show_profile
+
+
+def modulo_data_entry():
+    pass
 
 # ============================================================
 # PAGE CONFIG & BACKGROUND
 # ============================================================
 st.set_page_config(page_title="BostonPharmacy-OS", page_icon="💊", layout="centered")
+create_tables()
+update_database()
+
+if "user" not in st.session_state:
+
+    login_screen()
+
+    st.stop()
 # ============================================================
 # LOAD STUDENT PROGRESS
 # ============================================================
@@ -540,31 +554,93 @@ st.sidebar.markdown("---")
 st.sidebar.markdown(
     "### 🖥️ Training Modules"
 )
+st.sidebar.markdown(
+    """
+    <style>
 
+    div[data-baseweb="select"] {
 
-opcion = st.sidebar.selectbox(
-    "Select Module:",
-    [
-        "1. Data Entry & E-Prescribing",
-        "2. Insurance Billing (MassHealth)",
-        "3. Controlled Substances (MassPAT)",
-        "4. Patient POS & Copay",
-         "5. Medication Knowledge",
-         "6. PTCB Practice Exam"
-    ]
+        max-height: 250px;
+
+        overflow-y: auto;
+
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
+modules = [
+
+    "👨‍🎓 My Profile",
+
+    "1. Data Entry & E-Prescribing",
+
+    "2. Insurance Billing (MassHealth)",
+
+    "3. Controlled Substances (MassPAT)",
+
+    "4. Patient POS & Copay",
+
+    "5. Medication Knowledge",
+
+    "6. PTCB Practice Exam"
+
+]
+st.sidebar.markdown(
+    """
+    <style>
+
+    section[data-testid="stSidebar"] {
+
+        width: 350px !important;
+
+    }
+
+
+    section[data-testid="stSidebar"] > div {
+
+        width: 350px !important;
+
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+st.sidebar.markdown(
+    "### 🖥️ Training Modules"
+)
+
+
+with st.sidebar.container(height=450):
+
+    opcion = st.radio(
+        "Select Module",
+        modules
+    )
+st.write("DEBUG MENU:", opcion)
 
 st.sidebar.markdown(
     "</div>",
     unsafe_allow_html=True
 )
 
+# MODULE PROFILE
 # ============================================================
+
+if opcion == "👨‍🎓 My Profile":
+
+    show_profile()
+
+
 # MODULE 1
 # ============================================================
 
-if opcion == "1. Data Entry & E-Prescribing":
+elif opcion == "1. Data Entry & E-Prescribing":
+
+    modulo_data_entry()
 
     st.header("📝 Prescription Data Entry Module")
 
@@ -936,11 +1012,11 @@ elif opcion == "5. Medication Knowledge":
    # ============================================================
 # MODULE 6: PTCB EXAM
 # ============================================================
-
 elif opcion == "6. PTCB Practice Exam":
 
-    modulo_ptcb(progreso)
+    st.success("✅ PTCB MODULE LOADED")
     
+    modulo_ptcb(progreso)
 
 # ============================================================
 # FOOTER

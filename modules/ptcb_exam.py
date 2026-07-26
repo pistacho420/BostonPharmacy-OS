@@ -8,9 +8,21 @@ import random
 
 
 from data.ptcb_questions import preguntas_ptcb
-
+from database.database import (
+    save_module_progress,
+    add_achievement,
+    get_connection
+)
 
 def modulo_ptcb(progreso):
+    if "ptcb_errors" not in st.session_state:
+        st.session_state.ptcb_errors = {}
+
+    if "ptcb_correct_categories" not in st.session_state:
+        st.session_state.ptcb_correct_categories = {}
+        
+    errores_categoria = {}
+    correctas_categoria = {}
     
     st.write("Total PTCB Questions:", len(preguntas_ptcb))
 
@@ -54,6 +66,24 @@ def modulo_ptcb(progreso):
 
         porcentaje = int((score / total) * 100)
 
+        weak_areas = []
+
+
+        if "ptcb_errors" in st.session_state:
+
+            for area, errores in st.session_state.ptcb_errors.items():
+
+                if errores > 0:
+
+                    weak_areas.append(
+                        area
+                    )
+
+
+        weak_areas_text = ", ".join(
+            weak_areas
+        )
+
         st.success("🎓 Exam Completed")
         st.divider()
 
@@ -96,6 +126,33 @@ def modulo_ptcb(progreso):
             f"{porcentaje}%"
         )
 
+        if "user" in st.session_state:
+            user_id = st.session_state.user["id"]
+
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                UPDATE users
+
+                SET
+                    ptcb_correct = ptcb_correct + ?,
+                    ptcb_wrong = ptcb_wrong + ?,
+                    ptcb_attempts = ptcb_attempts + 1
+
+                WHERE id = ?
+                """,
+                (
+                    score,
+                    total - score,
+                    user_id
+                )
+            )
+
+            conn.commit()
+            conn.close()
+
         progreso.save_ptcb_result(
             score,
             total
@@ -119,11 +176,80 @@ def modulo_ptcb(progreso):
             "XP Earned",
             f"+{xp_ganado} XP"
         )
+        
+        if "user" in st.session_state:
 
+            user_id = st.session_state.user["id"]
+
+            add_achievement(
+                user_id,
+                "📝 PTCB Student"
+            )
+
+            if porcentaje >= 80:
+                add_achievement(
+                    user_id,
+                    "🎓 PTCB Ready"
+                )
+
+            if porcentaje >= 90:
+                add_achievement(
+                    user_id,
+                    "🏆 Pharmacy Master"
+                )
+
+        if "user" in st.session_state:
+
+            save_module_progress(
+                st.session_state.user["id"],
+                "PTCB Practice Exam",
+                xp_ganado
+            )
+
+        user_id = st.session_state.user["id"]
+
+
+        conn = get_connection()
+
+        cursor = conn.cursor()
+
+
+        cursor.execute(
+            """
+            UPDATE users
+
+            SET ptcb_attempts = ptcb_attempts + 1,
+
+            ptcb_best_score = CASE
+
+                WHEN ? > ptcb_best_score
+
+                THEN ?
+
+                ELSE ptcb_best_score
+
+            END
+
+            WHERE id = ?
+
+            """,
+
+            (
+                porcentaje,
+                porcentaje,
+                user_id
+            )
+        )
+
+
+        conn.commit()
+
+        conn.close()
         if xp_ganado > 0:
             progreso.add_xp(xp_ganado)
         else:
             st.warning("📚 Keep studying. Try again!")
+            
 
         if st.button("Restart Exam"):
             del st.session_state.ptcb_questions
@@ -146,7 +272,8 @@ def modulo_ptcb(progreso):
 
 
     st.info(
-        f"Question {numero} of {len(st.session_state.ptcb_questions)}"
+        f"Question {numero} of {len(st.session_state.ptcb_questions
+        )}"
     )
 
 
@@ -179,6 +306,12 @@ def modulo_ptcb(progreso):
             )
 
             st.session_state.ptcb_score += 1
+            
+            categoria = pregunta["categoria"]
+
+            st.session_state.ptcb_correct_categories[categoria] = (
+                st.session_state.ptcb_correct_categories.get(categoria, 0) + 1
+            )
 
 
         else:
@@ -186,7 +319,11 @@ def modulo_ptcb(progreso):
             st.error(
                 "❌ Incorrect"
             )
+            categoria = pregunta["categoria"]
 
+            st.session_state.ptcb_errors[categoria] = (
+                st.session_state.ptcb_errors.get(categoria, 0) + 1
+            )
 
         st.info(
             f"📚 Explanation: {pregunta['explicacion']}"
