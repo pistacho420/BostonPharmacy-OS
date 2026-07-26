@@ -9,15 +9,26 @@ from database.database import (
 
 def show_profile():
 
-
     user = st.session_state.user
 
+    # Profile Picture
     if user["profile_image"]:
 
-        st.image(
-            user["profile_image"],
-            width=200
-        )
+        if os.path.exists(user["profile_image"]):
+
+            st.image(
+                user["profile_image"],
+                width=200
+            )
+
+        else:
+
+            st.info("📷 Upload your picture")
+
+    else:
+
+        st.info("📷 Upload your picture")
+
     st.header(
         f"👨‍🎓 Welcome {user['full_name']}"
     )
